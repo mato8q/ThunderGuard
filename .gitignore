@@ -1,0 +1,36 @@
+# Large datasets
+datasets/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Memory banks (binary, auto-generated)
+*.npz
+*.npy
+
+# Model checkpoints
+*.pt
+*.pth
+*.bin
+*.safetensors
+
+# Vector stores (auto-generated)
+jailbreak_store/
+jailbreak_store_ollama/
+
+# Environments
+.env
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
