@@ -24,14 +24,13 @@ uv sync
 
 **Ollama port:** This machine runs Ollama on port **1234** (set via `OLLAMA_HOST=0.0.0.0:1234`). Both scripts are configured for `http://localhost:1234`. If your Ollama uses the default port (11434), update `OLLAMA_HOST` at the top of each script.
 
-Hardware target: RTX 4070 (12 GB VRAM). Do not load both qwen3.5:9b and mistral:7b concurrently — peak concurrent VRAM can exceed 12 GB.
+Hardware target: RTX 4090 (24 GB VRAM). All three models (qwen3.5:9b + mistral:7b + nomic-embed-text) fit concurrently (~11 GB total), so no model swapping occurs between attacker → target → judge steps.
 
 ## Running Attacks
 
 **PAIR** (Chao et al. 2023 — iterative attacker/judge refinement, K=3 parallel streams, up to 20 rounds):
 ```bash
-uv run python run_pair.py --n 1 --k 1 --iters 3   # fast smoke test (~1 min)
-uv run python run_pair.py --n 1                    # full smoke test (~3 min)
+uv run python run_pair.py --n 1                    # smoke test (~3 min)
 uv run python run_pair.py --n 10                   # pilot (~30 min)
 uv run python run_pair.py                          # full 820-prompt run (~25 hrs)
 uv run python run_pair.py --target mistral:7b --k 1   # single stream, faster

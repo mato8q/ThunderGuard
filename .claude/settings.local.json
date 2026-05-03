@@ -11,7 +11,11 @@
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\ICMNLAB-GIGABYTE\\\\Desktop\\\\IMAG\" -Force)",
       "Bash(Select-Object Name, Mode)",
       "Bash(Format-Table -AutoSize)",
-      "PowerShell($env:OLLAMA_HOST)"
+      "PowerShell($env:OLLAMA_HOST)",
+      "PowerShell(Get-Process *)",
+      "PowerShell(Stop-Process *)",
+      "PowerShell(Get-WmiObject *)",
+      "PowerShell(nvidia-smi *)"
     ]
   }
 }
