@@ -10,7 +10,8 @@
       "PowerShell(Get-Item *)",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\ICMNLAB-GIGABYTE\\\\Desktop\\\\IMAG\" -Force)",
       "Bash(Select-Object Name, Mode)",
-      "Bash(Format-Table -AutoSize)"
+      "Bash(Format-Table -AutoSize)",
+      "PowerShell($env:OLLAMA_HOST)"
     ]
   }
 }

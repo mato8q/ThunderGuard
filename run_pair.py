@@ -44,7 +44,7 @@ except ImportError:
     print("ERROR: tqdm not installed. Run: pip install tqdm")
     sys.exit(1)
 
-OLLAMA_HOST    = "http://localhost:11434"
+OLLAMA_HOST    = "http://localhost:1234"
 ATTACKER_MODEL = "qwen3.5:9b"    # Local: matches GPT-4o-mini on MMLU-Pro/IFEval (Mar 2026)
 JUDGE_MODEL    = "qwen3.5:9b"    # Local: 89.2% IFEval at Q4 → reliable "Rating: [[N]]" format
 

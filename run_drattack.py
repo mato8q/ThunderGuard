@@ -56,7 +56,7 @@ except ImportError:
     print("ERROR: tqdm not installed. Run: pip install tqdm")
     sys.exit(1)
 
-OLLAMA_HOST       = "http://localhost:11434"
+OLLAMA_HOST       = "http://localhost:1234"
 DECOMPOSER_MODEL  = "qwen3.5:9b"      # Local: matches GPT-4o-mini on MMLU-Pro/IFEval (Mar 2026)
 JUDGE_MODEL       = "qwen3.5:9b"      # Local: 89.2% IFEval at Q4 → reliable "Rating: [[N]]" format
 EMBEDDING_MODEL   = "nomic-embed-text" # Local: efficient semantic embeddings
@@ -157,7 +157,7 @@ def chat(model: str, messages: list, temperature: float = 1.0) -> str:
 
 
 def embed(text: str) -> list:
-    url = "http://localhost:11434/api/embed"
+    url = f"{OLLAMA_HOST}/api/embed"
     for attempt in range(3):
         try:
             resp = requests.post(url, json={"model": EMBEDDING_MODEL, "input": text})
