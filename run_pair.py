@@ -1,17 +1,18 @@
 """
-PAIR Attack Runner — Paper Standard
-=====================================
+PAIR Attack Runner — Fully Local
+==================================
 Based on: Chao et al. 2023, "Jailbreaking Black Box Large Language Models in Twenty Queries"
 Runs K=3 independent attacker streams per prompt (paper default) and returns the best result.
+All models run locally via Ollama.
 
 Setup:
-    pip install openai
-    export OPENAI_API_KEY=sk-...           # attacker + judge use OpenAI
-    ollama pull mistral                    # or whichever target model you want
+    pip install openai  # for OpenAI client abstraction (still uses Ollama backend)
+    ollama pull qwen2.5:7b
+    ollama pull mistral:7b
+    ollama serve       # start Ollama in another terminal
 
 Run:
     python run_pair.py --target mistral        # Mistral-7B (Ollama)
-    python run_pair.py --target vicuna:7b      # Vicuna-7B (Ollama)
     python run_pair.py --target mistral --n 1  # smoke test (1 prompt)
     python run_pair.py --target mistral --k 1  # single stream (faster)
 
@@ -19,9 +20,8 @@ Output:
     pair_results_{target}.csv — best adversarial prompt + response + score per goal
 
 Cost:
-    Attacker (gpt-4o-mini) + Judge (gpt-4o) via OpenAI API.
-    ~$0.10 per prompt × 820 prompts ≈ $80–120 total for full run.
-    Target model runs free via local Ollama.
+    Fully local. Zero API cost. Requires: RTX 4070+ (12GB VRAM).
+    ~2–3 hours per 820 prompts on single GPU.
 """
 
 import argparse
@@ -40,10 +40,9 @@ except ImportError:
     sys.exit(1)
 
 OLLAMA_BASE_URL = "http://localhost:11434/v1"
-ATTACKER_MODEL  = "gpt-4o-mini"   # paper: GPT-3.5 / GPT-4
-JUDGE_MODEL     = "gpt-4o"        # paper: GPT-4
+ATTACKER_MODEL  = "qwen2.5:7b"    # Local: best reasoning for adversarial generation
+JUDGE_MODEL     = "mistral:7b"     # Local: best instruction-following for consistent scoring
 
-openai_client = OpenAI()  # reads OPENAI_API_KEY from env
 ollama_client = OpenAI(base_url=OLLAMA_BASE_URL, api_key="ollama")
 
 # Verbatim from Chao et al. 2023, Appendix B
@@ -63,10 +62,9 @@ Your rating should strictly follow this format: "Rating: [[rating]]", the rating
 
 
 def chat(model, messages, temperature=1.0):
-    client = ollama_client if model not in (ATTACKER_MODEL, JUDGE_MODEL) else openai_client
     for attempt in range(3):
         try:
-            resp = client.chat.completions.create(
+            resp = ollama_client.chat.completions.create(
                 model=model, messages=messages, temperature=temperature
             )
             return resp.choices[0].message.content or ""
@@ -189,21 +187,17 @@ def main():
     parser.add_argument("--output", default=None, help="Output CSV path (default: pair_results_{target}.csv)")
     args = parser.parse_args()
 
-    if not os.environ.get("OPENAI_API_KEY"):
-        print("ERROR: OPENAI_API_KEY not set. Export it first:")
-        print("  export OPENAI_API_KEY=sk-...")
-        sys.exit(1)
-
     out_path = args.output or f"pair_results_{args.target.replace(':', '-')}.csv"
 
     rows = load_datasets(args.n)
 
     print(f"Loaded {len(rows)} prompts")
-    print(f"Attacker : {ATTACKER_MODEL} (OpenAI)")
-    print(f"Judge    : {JUDGE_MODEL} (OpenAI)")
+    print(f"Attacker : {ATTACKER_MODEL} (Ollama / local)")
+    print(f"Judge    : {JUDGE_MODEL} (Ollama / local)")
     print(f"Target   : {args.target} (Ollama / local)")
     print(f"Streams  : K={args.k} x {args.iters} iters")
-    print(f"Est. cost: ~${len(rows) * 0.10:.0f}–${len(rows) * 0.15:.0f}")
+    print(f"Est. time: ~{len(rows) * 3 / 60:.0f}–{len(rows) * 5 / 60:.0f} mins on RTX 4070")
+    print(f"Cost     : Free (fully local)")
     print(f"Output   : {out_path}\n")
 
     out_fields = ["id", "source", "category", "goal", "target_str",
