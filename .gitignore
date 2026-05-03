@@ -4,3 +4,4 @@ __pycache__/
 
 # PAIR output — generated, not source
 pair_results.csv
+.DS_Store

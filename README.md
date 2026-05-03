@@ -9,8 +9,8 @@ Base64, Zulu, PAIR, and DrAttack attacks on 820 harmful prompts (AdvBench + HEx-
 |---|---|---|---|---|
 | **Base64** | Encodes the harmful prompt in Base64 — model decodes before refusing, bypassing filters | Free | <1s | — |
 | **Zulu** | Translates the prompt to Zulu (low-resource language) to evade English-trained safety filters | Free | <1s | — |
-| **PAIR** | Attacker LLM (Qwen 3.5 9B) iteratively rewrites the prompt based on judge feedback (Qwen 3.5 9B) over up to 20 rounds | Free | 2–3 hrs | `run_pair.py` |
-| **DrAttack** | Decomposes the harmful prompt into 3 innocent sub-prompts via Qwen 3.5 9B, ranks by semantic similarity (nomic-embed-text), scores with Qwen 3.5 9B | Free | 4–6 hrs | `run_drattack.py` |
+| **PAIR** | Attacker LLM (Qwen 3.5 9B) iteratively rewrites the prompt based on judge feedback (Qwen 3.5 9B) over up to 20 rounds | Free | ~30 min for 10 / ~25 hrs for 820 | `run_pair.py` |
+| **DrAttack** | Decomposes the harmful prompt into 3 innocent sub-prompts via Qwen 3.5 9B, ranks by semantic similarity (nomic-embed-text), scores with Qwen 3.5 9B | Free | ~25 min for 10 / ~22 hrs for 820 | `run_drattack.py` |
 
 ---
 
@@ -74,10 +74,12 @@ ollama serve       # in another terminal
 
 **Run:**
 ```bash
-python run_pair.py --n 1          # smoke test (~10 min)
+python run_pair.py --n 1          # smoke test (~3 min)
 python run_pair.py --n 10         # pilot (~30 min)
-python run_pair.py                # full run (~2–3 hrs on RTX 4070)
+python run_pair.py                # full run (~25 hrs for 820 prompts)
 ```
+
+> **Live ETA**: tqdm shows `[elapsed<remaining, sec/prompt]` after the first prompt — most accurate estimate.
 
 **Options:**
 ```
@@ -122,10 +124,12 @@ ollama serve               # in another terminal
 
 **Run:**
 ```bash
-python run_drattack.py --n 1      # smoke test (~15 min)
-python run_drattack.py --n 10     # pilot (~1 hr)
-python run_drattack.py            # full run (~4–6 hrs on RTX 4070)
+python run_drattack.py --n 1      # smoke test (~2 min)
+python run_drattack.py --n 10     # pilot (~25 min)
+python run_drattack.py            # full run (~22 hrs for 820 prompts)
 ```
+
+> **Live ETA**: tqdm shows `[elapsed<remaining, sec/prompt]` after the first prompt — most accurate estimate.
 
 **Options:**
 ```
