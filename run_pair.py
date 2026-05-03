@@ -221,7 +221,7 @@ def compute_acc_f1(scored_rows):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--target", default="mistral", help="Ollama target model (default: mistral)")
+    parser.add_argument("--target", default="mistral:7b", help="Ollama target model (default: mistral:7b)")
     parser.add_argument("--n",      type=int, help="Limit to first N rows")
     parser.add_argument("--iters",  type=int, default=20, help="Max iterations per stream (default: 20)")
     parser.add_argument("--k",      type=int, default=3,  help="Parallel streams per prompt (default: 3)")

@@ -22,25 +22,28 @@ uv sync
 # or: pip install ollama requests tqdm
 ```
 
+**Ollama port:** This machine runs Ollama on port **1234** (set via `OLLAMA_HOST=0.0.0.0:1234`). Both scripts are configured for `http://localhost:1234`. If your Ollama uses the default port (11434), update `OLLAMA_HOST` at the top of each script.
+
 Hardware target: RTX 4070 (12 GB VRAM). Do not load both qwen3.5:9b and mistral:7b concurrently — peak concurrent VRAM can exceed 12 GB.
 
 ## Running Attacks
 
 **PAIR** (Chao et al. 2023 — iterative attacker/judge refinement, K=3 parallel streams, up to 20 rounds):
 ```bash
-python run_pair.py --n 1                     # smoke test (~3 min)
-python run_pair.py --n 10                    # pilot (~30 min)
-python run_pair.py                           # full 820-prompt run (~25 hrs)
-python run_pair.py --target mistral --k 1   # single stream, faster
-python run_pair.py --iters 20 --output out.csv
+uv run python run_pair.py --n 1 --k 1 --iters 3   # fast smoke test (~1 min)
+uv run python run_pair.py --n 1                    # full smoke test (~3 min)
+uv run python run_pair.py --n 10                   # pilot (~30 min)
+uv run python run_pair.py                          # full 820-prompt run (~25 hrs)
+uv run python run_pair.py --target mistral:7b --k 1   # single stream, faster
+uv run python run_pair.py --iters 20 --output out.csv
 ```
 
 **DrAttack** (Li et al. 2024 — decompose → synonym variants → embedding-ranked reconstruction):
 ```bash
-python run_drattack.py --n 1     # smoke test (~2 min)
-python run_drattack.py --n 10    # pilot (~25 min)
-python run_drattack.py           # full 820-prompt run (~22 hrs)
-python run_drattack.py --iters 10 --output out.csv
+uv run python run_drattack.py --n 1     # smoke test (~15 sec)
+uv run python run_drattack.py --n 10    # pilot (~25 min)
+uv run python run_drattack.py           # full 820-prompt run (~22 hrs)
+uv run python run_drattack.py --iters 10 --output out.csv
 ```
 
 Output CSVs are auto-named `{attack}_results_{target_model_slug}.csv` and written to `data/transformed/`. Rows are flushed after each prompt for fault tolerance.
@@ -66,7 +69,7 @@ Pipeline per prompt:
 6. Test up to 10 ranked combinations; apply wordgame obfuscation (substitute nouns with fruit names)
 7. `run_drattack()` — Orchestrates full pipeline (lines 318–381)
 
-Embeddings use the Ollama REST API directly (`requests` to `http://localhost:11434/api/embeddings`).
+Embeddings use the Ollama REST API directly (`requests` to `{OLLAMA_HOST}/api/embed`).
 
 ### Shared Patterns
 

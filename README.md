@@ -30,8 +30,8 @@ exports/
     └── transformed/
         ├── base64_prompts.csv              ← ready to paste into any model
         ├── zulu_prompts.csv                ← ready to paste into any model
-        ├── pair_results_mistral.csv        ← PAIR output
-        └── drattack_results_mistral.csv    ← DrAttack output
+        ├── pair_results_mistral-7b.csv        ← PAIR output
+        └── drattack_results_mistral-7b.csv    ← DrAttack output
 ```
 
 ---
@@ -60,30 +60,39 @@ print(df["prompt"][0])   # paste into ChatGPT / Claude / etc.
 
 ---
 
+## Prerequisites
+
+Both scripts connect to Ollama at `http://localhost:1234` (configured via `OLLAMA_HOST=0.0.0.0:1234` on this machine). If your Ollama uses the default port, update `OLLAMA_HOST` at the top of each script to `http://localhost:11434`.
+
+Run `ollama list` to confirm the three required models are present: `qwen3.5:9b`, `mistral:7b`, `nomic-embed-text`.
+
+---
+
 ## PAIR (`run_pair.py`)
 
 Attacker LLM iteratively rewrites a jailbreak prompt using feedback from a judge LLM (score 1–10). Runs K=3 parallel streams and returns the best result. Based on Chao et al. 2023. **Now fully local.**
 
 **Setup:**
 ```bash
-pip install openai  # for OpenAI client abstraction (uses Ollama backend)
 ollama pull qwen3.5:9b
 ollama pull mistral:7b
-ollama serve       # in another terminal
+ollama serve       # in another terminal (skip if already running)
+uv sync            # or: pip install ollama requests tqdm
 ```
 
 **Run:**
 ```bash
-python run_pair.py --n 1          # smoke test (~3 min)
-python run_pair.py --n 10         # pilot (~30 min)
-python run_pair.py                # full run (~25 hrs for 820 prompts)
+uv run python run_pair.py --n 1 --k 1 --iters 3   # fast smoke test (~1 min)
+uv run python run_pair.py --n 1                    # smoke test (~3 min)
+uv run python run_pair.py --n 10                   # pilot (~30 min)
+uv run python run_pair.py                          # full run (~25 hrs for 820 prompts)
 ```
 
 > **Live ETA**: tqdm shows `[elapsed<remaining, sec/prompt]` after the first prompt — most accurate estimate.
 
 **Options:**
 ```
---target MODEL   Ollama target model (default: mistral)
+--target MODEL   Ollama target model (default: mistral:7b)
 --n N            Limit to first N prompts
 --iters N        Max iterations per stream (default: 20)
 --k N            Parallel streams (default: 3)
@@ -115,25 +124,25 @@ Decomposes the harmful prompt into 3 sub-prompts that each appear innocuous, the
 
 **Setup:**
 ```bash
-pip install openai requests  # for OpenAI client abstraction + Ollama embeddings API
 ollama pull qwen3.5:9b
 ollama pull mistral:7b
 ollama pull nomic-embed-text
-ollama serve               # in another terminal
+ollama serve               # in another terminal (skip if already running)
+uv sync                    # or: pip install ollama requests tqdm
 ```
 
 **Run:**
 ```bash
-python run_drattack.py --n 1      # smoke test (~2 min)
-python run_drattack.py --n 10     # pilot (~25 min)
-python run_drattack.py            # full run (~22 hrs for 820 prompts)
+uv run python run_drattack.py --n 1      # smoke test (~15 sec)
+uv run python run_drattack.py --n 10     # pilot (~25 min)
+uv run python run_drattack.py            # full run (~22 hrs for 820 prompts)
 ```
 
 > **Live ETA**: tqdm shows `[elapsed<remaining, sec/prompt]` after the first prompt — most accurate estimate.
 
 **Options:**
 ```
---target MODEL   Ollama target model (default: mistral)
+--target MODEL   Ollama target model (default: mistral:7b)
 --n N            Limit to first N prompts
 --iters N        Max combinations to test (default: 10)
 --output PATH    Output CSV path

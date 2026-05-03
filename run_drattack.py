@@ -447,7 +447,7 @@ def compute_acc_f1(scored_rows: list) -> tuple:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--target", default="mistral", help="Ollama target model (default: mistral)")
+    parser.add_argument("--target", default="mistral:7b", help="Ollama target model (default: mistral:7b)")
     parser.add_argument("--n",      type=int, help="Limit to first N rows")
     parser.add_argument("--iters",  type=int, default=10, help="Max combinations to test (default: 10)")
     parser.add_argument("--output", default=None, help="Output CSV path")
