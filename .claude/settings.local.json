@@ -7,7 +7,10 @@
       "PowerShell(Test-Path *)",
       "PowerShell($installerPath = \"C:\\\\Users\\\\ICMNLAB-GIGABYTE\\\\Desktop\\\\OllamaSetup.exe\"; Invoke-WebRequest -Uri \"https://ollama.com/download/OllamaSetup.exe\" -OutFile $installerPath; Write-Output \"Downloaded to $installerPath\")",
       "PowerShell(Start-Sleep -Seconds 5; $size = \\(Get-Item \"C:\\\\Users\\\\ICMNLAB-GIGABYTE\\\\Desktop\\\\OllamaSetup.exe\"\\).Length; Write-Output \"Final size: $size bytes\")",
-      "PowerShell(Get-Item *)"
+      "PowerShell(Get-Item *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\ICMNLAB-GIGABYTE\\\\Desktop\\\\IMAG\" -Force)",
+      "Bash(Select-Object Name, Mode)",
+      "Bash(Format-Table -AutoSize)"
     ]
   }
 }
