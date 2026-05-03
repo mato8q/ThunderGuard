@@ -156,6 +156,52 @@ python run_drattack.py            # full run (~4–6 hrs on RTX 4070)
 
 ---
 
+## Expected Results (Paper Baselines)
+
+These are the headline ASR numbers reported in the original papers. Use them to sanity-check whether your local run is producing reasonable output. **Local Qwen 3.5 9B will trail these numbers — RLHF on closed models is hard to match.**
+
+### PAIR — Chao et al. 2023 (Table 1)
+
+Evaluated on AdvBench harmful_behaviors subset (~50 prompts), K=3 streams, max 20 iters, GPT-4 judge:
+
+| Target model | Paper ASR | Avg queries |
+|---|---|---|
+| Vicuna-13B-v1.5 | **88%** | 11.9 |
+| GPT-3.5-Turbo | **60%** | 15.6 |
+| GPT-4 | **50%** | 16.6 |
+| Gemini-Pro | **73%** | 14.6 |
+| Llama-2-7B-Chat | **10%** | 33.8 |
+| Claude-1 / Claude-2 | **0–4%** | 18+ |
+
+**Local expectations** with `qwen3.5:9b` attacker + judge, target = `mistral:7b`:
+- Mistral lacks the heavy RLHF of GPT-4/Llama-2-Chat → expect ASR closer to Vicuna's range
+- Realistic target: **40–70% ASR** (lower than paper because the local attacker is weaker than the paper's Vicuna-13B + GPT-4 judge combo)
+
+### DrAttack — Li et al. 2024 EMNLP (Table 1)
+
+Evaluated on AdvBench harmful_behaviors subset (~52 prompts), N=3 sub-prompts, K=5 variants, GPT-3.5-turbo judge, **human evaluation**:
+
+| Target model | Paper ASR | Avg queries |
+|---|---|---|
+| Vicuna-7B | **98.1%** | 7.6 |
+| GPT-3.5-Turbo | **86.2%** | 12.4 |
+| GPT-4 | **84.6%** | 12.9 |
+| Llama-2-13B-Chat | **44.2%** | — |
+| Llama-2-7B-Chat | **38.5%** | 16.1 |
+
+**Local expectations** with `qwen3.5:9b` decomposer + judge, target = `mistral:7b`:
+- DrAttack's wordgame mode is target-agnostic — should generalize well
+- Realistic target: **60–80% ASR**, average ~5–8 iterations per prompt
+
+### Why your local numbers will differ from the paper
+
+1. **Weaker attacker/judge** — Qwen 3.5 9B Q4 is strong, but GPT-4 still has more nuanced adversarial prose generation
+2. **Different target** — paper evaluated GPT-4, Vicuna, Llama-2; you're attacking `mistral:7b` (different alignment, different refusal patterns)
+3. **Judge calibration drift** — local judge may be more lenient or stricter than GPT-4
+4. **Smaller test set** — paper used ~50 prompts; you have 820 → wider distribution, smoother ASR
+
+---
+
 ## Output Schema (PAIR & DrAttack)
 
 | Column | Description |

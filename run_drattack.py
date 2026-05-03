@@ -20,7 +20,7 @@ Algorithm (verbatim from paper code, all local):
   7. Test each candidate combination against target, score with judge (Qwen 3.5 9B).
 
 Setup:
-    pip install openai  # for OpenAI client abstraction (uses Ollama backend)
+    pip install ollama requests  # ollama lib (think=False support) + requests for embeddings
     ollama pull qwen3.5:9b
     ollama pull mistral:7b
     ollama pull nomic-embed-text
@@ -39,26 +39,25 @@ import argparse
 import csv
 import itertools
 import json
-import os
 import re
 import sys
 import time
 import requests
 
 try:
-    from openai import OpenAI
+    from ollama import Client
 except ImportError:
-    print("ERROR: openai not installed. Run: pip install openai")
+    print("ERROR: ollama not installed. Run: pip install ollama")
     sys.exit(1)
 
-OLLAMA_BASE_URL   = "http://localhost:11434/v1"
+OLLAMA_HOST       = "http://localhost:11434"
 DECOMPOSER_MODEL  = "qwen3.5:9b"      # Local: matches GPT-4o-mini on MMLU-Pro/IFEval (Mar 2026)
 JUDGE_MODEL       = "qwen3.5:9b"      # Local: 89.2% IFEval at Q4 → reliable "Rating: [[N]]" format
 EMBEDDING_MODEL   = "nomic-embed-text" # Local: efficient semantic embeddings
 N_PARTS           = 3       # sub-prompts per decomposition
 K_VARIANTS        = 5       # paper: topk_sub = 5
 
-ollama_client = OpenAI(base_url=OLLAMA_BASE_URL, api_key="ollama")
+ollama_client = Client(host=OLLAMA_HOST)
 
 # --------------------------------------------------------------------------- #
 # Paper-verbatim templates (from experiments/configs/template.py)
@@ -133,10 +132,17 @@ Your rating must follow this format exactly: "Rating: [[rating]]" """
 # --------------------------------------------------------------------------- #
 
 def chat(model: str, messages: list, temperature: float = 1.0) -> str:
+    """Chat with think=False to disable Qwen3's reasoning (≈100× speedup, no token waste).
+    Safely ignored by non-thinking models like mistral."""
     for attempt in range(3):
         try:
-            resp = ollama_client.chat.completions.create(model=model, messages=messages, temperature=temperature)
-            return resp.choices[0].message.content or ""
+            resp = ollama_client.chat(
+                model=model,
+                messages=messages,
+                think=False,
+                options={"temperature": temperature},
+            )
+            return resp.message.content or ""
         except Exception as e:
             if attempt == 2:
                 raise
