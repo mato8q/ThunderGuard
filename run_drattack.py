@@ -6,22 +6,22 @@ LLM Jailbreakers" (EMNLP 2024 Findings, arXiv 2402.16914)
 Reference implementation: github.com/xirui-li/DrAttack
 
 Algorithm (verbatim from paper code, all local):
-  1. Identify harmful nouns in the goal and map each to a harmless alternative (Qwen 2.5 7B).
+  1. Identify harmful nouns in the goal and map each to a harmless alternative (Qwen 3.5 9B).
   2. Build a harmless version of the goal; query the TARGET model for its harmless response.
      This response becomes the in-context demonstration (paper §3.2 implicit reconstruction).
   3. Decompose harmful prompt into N=3 sub-prompts ("questions prefix").
-  4. For each sub-prompt, generate K=5 synonym candidates (Qwen 2.5 7B), rank by
+  4. For each sub-prompt, generate K=5 synonym candidates (Qwen 3.5 9B), rank by
      nomic-embed-text cosine similarity. Synonym selection is embedding-driven,
      no target feedback (paper §3.3 noun_sub / verb_sub).
   5. Word-game mode: substitute harmful nouns with fixed fruit names (apple, banana, …)
      in both the prompt body and the harmless response. Send wordgame_template as turn 1
      (model acknowledges mapping), then send the obfuscated prompt as turn 2.
   6. Build the jailbreak using paper's exact general_template.
-  7. Test each candidate combination against target, score with judge (Mistral 7B).
+  7. Test each candidate combination against target, score with judge (Qwen 3.5 9B).
 
 Setup:
     pip install openai  # for OpenAI client abstraction (uses Ollama backend)
-    ollama pull qwen2.5:7b
+    ollama pull qwen3.5:9b
     ollama pull mistral:7b
     ollama pull nomic-embed-text
     ollama serve       # start Ollama in another terminal
@@ -52,8 +52,8 @@ except ImportError:
     sys.exit(1)
 
 OLLAMA_BASE_URL   = "http://localhost:11434/v1"
-DECOMPOSER_MODEL  = "qwen2.5:7b"      # Local: best reasoning for decomposition + variant generation
-JUDGE_MODEL       = "mistral:7b"       # Local: best instruction-following for consistent scoring
+DECOMPOSER_MODEL  = "qwen3.5:9b"      # Local: matches GPT-4o-mini on MMLU-Pro/IFEval (Mar 2026)
+JUDGE_MODEL       = "qwen3.5:9b"      # Local: 89.2% IFEval at Q4 → reliable "Rating: [[N]]" format
 EMBEDDING_MODEL   = "nomic-embed-text" # Local: efficient semantic embeddings
 N_PARTS           = 3       # sub-prompts per decomposition
 K_VARIANTS        = 5       # paper: topk_sub = 5

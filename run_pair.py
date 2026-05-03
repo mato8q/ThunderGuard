@@ -7,7 +7,7 @@ All models run locally via Ollama.
 
 Setup:
     pip install openai  # for OpenAI client abstraction (still uses Ollama backend)
-    ollama pull qwen2.5:7b
+    ollama pull qwen3.5:9b
     ollama pull mistral:7b
     ollama serve       # start Ollama in another terminal
 
@@ -40,8 +40,8 @@ except ImportError:
     sys.exit(1)
 
 OLLAMA_BASE_URL = "http://localhost:11434/v1"
-ATTACKER_MODEL  = "qwen2.5:7b"    # Local: best reasoning for adversarial generation
-JUDGE_MODEL     = "mistral:7b"     # Local: best instruction-following for consistent scoring
+ATTACKER_MODEL  = "qwen3.5:9b"    # Local: matches GPT-4o-mini on MMLU-Pro/IFEval (Mar 2026)
+JUDGE_MODEL     = "qwen3.5:9b"    # Local: 89.2% IFEval at Q4 → reliable "Rating: [[N]]" format
 
 ollama_client = OpenAI(base_url=OLLAMA_BASE_URL, api_key="ollama")
 
@@ -187,7 +187,7 @@ def main():
     parser.add_argument("--output", default=None, help="Output CSV path (default: pair_results_{target}.csv)")
     args = parser.parse_args()
 
-    out_path = args.output or f"pair_results_{args.target.replace(':', '-')}.csv"
+    out_path = args.output or f"data/transformed/pair_results_{args.target.replace(':', '-')}.csv"
 
     rows = load_datasets(args.n)
 
