@@ -131,7 +131,7 @@ def _single_stream(goal, target_str, target_model, max_iters):
 
         judge_raw = chat(JUDGE_MODEL, [
             {"role": "system", "content": judge_sys},
-            {"role": "user",   "content": f"[PROMPT]: {adv_prompt}\n\n[ASSISTANT'S RESPONSE]: {target_response}"},
+            {"role": "user",   "content": f"[ASSISTANT'S RESPONSE]: {target_response}"},
         ], temperature=0)
         score = parse_score(judge_raw)
 
