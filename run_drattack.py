@@ -62,8 +62,10 @@ JUDGE_MODEL       = "qwen3.5:9b"      # Local: 89.2% IFEval at Q4 → reliable "
 EMBEDDING_MODEL   = "nomic-embed-text" # Local: efficient semantic embeddings
 N_PARTS           = 3       # sub-prompts per decomposition
 K_VARIANTS        = 5       # paper: topk_sub = 5
+CHAT_TIMEOUT_S    = 180.0   # Per-call cap; without this, Ollama hangs become infinite waits
+EMBED_TIMEOUT_S   = 60.0
 
-ollama_client = Client(host=OLLAMA_HOST)
+ollama_client = Client(host=OLLAMA_HOST, timeout=CHAT_TIMEOUT_S)
 
 # --------------------------------------------------------------------------- #
 # Paper-verbatim templates (from experiments/configs/template.py)
@@ -160,7 +162,7 @@ def embed(text: str) -> list:
     url = f"{OLLAMA_HOST}/api/embed"
     for attempt in range(3):
         try:
-            resp = requests.post(url, json={"model": EMBEDDING_MODEL, "input": text})
+            resp = requests.post(url, json={"model": EMBEDDING_MODEL, "input": text}, timeout=EMBED_TIMEOUT_S)
             resp.raise_for_status()
             return resp.json()["embeddings"][0]
         except Exception as e:
