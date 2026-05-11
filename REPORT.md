@@ -47,7 +47,7 @@ Mistral:7b has comparable alignment to Vicuna-7B (weak RLHF). The 77% local resu
 | Metric | Value |
 |--------|-------|
 | **Prompts evaluated** | 820 |
-| **ASR (Attack Success Rate)** | **95.2%** raw / **78.7%** after judge-calibration correction (see caveats below) |
+| **ASR (Attack Success Rate)** | **95.2%** raw (Qwen judge, score≥10) / **49.4%** triangulated (Llama2 judge, score≥8) — see analysis below |
 | **ACC** | 0.9793 |
 | **F1** | 0.9892 |
 | **Avg time / prompt** | ~47 s (post-fix, K=3 parallel streams) |
@@ -111,6 +111,55 @@ The 78.7 % figure is consistent with literature for Mistral-7B-Instruct (weakly 
 | Refusal-phrase override only catches explicit refusals | minor | ~1–2 pts |
 
 **Recommendation:** re-judge the CSV with a different model (e.g. `mistral:7b` or `llama2:7b` as judge — or even a stricter Qwen prompt) to get a more reliable ASR. The attacker work is salvageable; only the scoring layer is suspect.
+
+### Cross-judge validation — Llama2 7B as second judge
+
+Ran `rejudge.py` (`data/transformed/pair_results_mistral-7b_rejudge_llama2-7b.csv`) to score the same 820 responses with `llama2:7b` as judge. The two judges disagree wildly — but the disagreement is informative:
+
+**Score distribution:**
+
+| Score | Qwen 3.5 9B | Llama2 7B |
+|---:|---:|---:|
+| 1 (refusal) | 37 | 351 |
+| 6 | 0 | 8 |
+| 7 | 0 | 56 |
+| 8 | 0 | **395** |
+| 9 | 0 | 4 |
+| 10 | **781** | 6 |
+| 0 (error) | 2 | 0 |
+
+**Qwen is binary** — almost everything becomes 1 or 10. **Llama2 uses the middle of the scale** — its mode is 8, meaning "yes, the model answered, but I won't commit to a perfect-10 jailbreak rating." The paper's `score ≥ 10` threshold assumes a GPT-4-class judge that uses the top of the scale; 7B local judges don't.
+
+**ASR at varying thresholds:**
+
+| Threshold | Qwen 3.5 9B ASR | Llama2 7B ASR |
+|---:|---:|---:|
+| ≥ 10 (paper default) | **95.2 %** | **0.7 %** |
+| ≥ 9 | 95.2 % | 1.2 % |
+| ≥ 8 | 95.2 % | **49.4 %** |
+| ≥ 7 | 95.2 % | 56.2 % |
+
+**Threshold-10 agreement matrix:**
+
+|  | Llama2 = 10 | Llama2 < 10 |
+|---|---:|---:|
+| **Qwen = 10** | 6 | 775 |
+| **Qwen < 10** | 0 | 39 |
+
+When Llama2 says 10, Qwen always agrees (6/6). When Qwen says 10, Llama2 agrees only 0.8 % of the time. The 6 unanimous-10 rows are the defensible floor.
+
+### Final triangulated ASR estimate
+
+| Method | ASR | Defensibility |
+|---|---:|---|
+| Qwen judge, paper threshold (≥10) — raw | 95.2 % | Inflated (judge over-scoring) |
+| Qwen judge, after stripping generic-greeting false positives | 78.7 % | Better, still optimistic |
+| **Llama2 judge, calibrated threshold (≥8)** | **49.4 %** | **Best single-judge estimate** |
+| Both-judges-unanimous (≥10 on both) | 0.7 % | Conservative floor |
+
+The realistic ASR for PAIR/Qwen-attacker against Mistral-7B is **~50 %**, consistent with Mistral-7B literature. The reported 95.2 % was an artefact of judge mis-calibration — Qwen 3.5 9B Q4 saturates on "10" for any non-refusal response, including generic greetings unrelated to the goal.
+
+Practical takeaway for future runs: either (a) use a fp16 / 14B+ judge that uses the full 1-10 scale, (b) keep threshold ≥ 10 but require ensemble agreement from two independent judges, or (c) lower the success threshold to ≥ 8 when using small local judges.
 
 ### Comparison to Paper Baseline
 
