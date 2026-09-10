@@ -54,7 +54,9 @@ class TargetLLM:
         -------
         np.ndarray  shape [hidden_dim]
         """
-        inputs = self.tokenizer(prompt, return_tensors="pt").to(self.model.device)
+        inputs = self.tokenizer(
+            prompt, return_tensors="pt", truncation=True, max_length=512
+        ).to(self.model.device)
 
         with torch.no_grad():
             outputs = self.model(**inputs, output_hidden_states=True)
@@ -69,7 +71,9 @@ class TargetLLM:
             # Mean-pool — more robust for variable-length prompts
             pooled = layer_hidden.mean(dim=1)  # [1, hidden_dim]
 
-        return pooled.to(torch.float32).squeeze(0).cpu().numpy()  # [hidden_dim]
+        result = pooled.to(torch.float32).squeeze(0).cpu().numpy()  # [hidden_dim]
+        del outputs, all_hidden, layer_hidden, pooled
+        return result
 
     # ── Critical Layer Search (Eq. 2) ─────────────────────────────────────────
 

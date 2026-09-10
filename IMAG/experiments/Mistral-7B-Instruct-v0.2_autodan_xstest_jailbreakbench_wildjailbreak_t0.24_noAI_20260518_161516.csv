@@ -1,0 +1,5 @@
+dataset,total,tp,tn,fp,fn,acc,precision,recall,f1,fpr,time_s,s_per_sample,seed_size,memory_atk_mb,memory_total_mb
+autodan,820,194,0,0,626,0.2366,1.0,0.2366,0.3826,0,8.9,0.01,60,0.9375,2.3438
+xstest,140,0,140,0,0,1.0,0,0,0,0.0,1.0,0.01,60,0.9375,2.3438
+jailbreakbench,40,0,40,0,0,1.0,0,0,0,0.0,0.3,0.01,60,0.9375,2.3438
+wildjailbreak,140,0,140,0,0,1.0,0,0,0,0.0,1.1,0.01,60,0.9375,2.3438

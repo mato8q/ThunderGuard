@@ -36,7 +36,7 @@ N_DATASET_SEEDS  = 30   # samples from each dataset reserved to seed the memory 
 # Root of the datasets folder (resolved relative to this file)
 _HERE              = os.path.dirname(os.path.abspath(__file__))
 DATASETS_DIR       = os.path.join(_HERE, "..", "datasets")
-TRANSFORMED_DIR    = os.path.join(_HERE, "..", "adversarial-prompt", "data", "transformed")
+TRANSFORMED_DIR    = os.path.join(_HERE, "..", "data", "transformed")
 
 RANDOM_SEED   = 42
 
@@ -115,7 +115,7 @@ def _load_transformed_csv(fname: str, prompt_col: str) -> list[str]:
     return _load_csv(os.path.join(TRANSFORMED_DIR, fname), prompt_col, fname)
 
 
-def _load_autodan_texts(fname: str = "autodan_transformed_820.csv") -> list[str]:
+def _load_autodan_texts(fname: str = "autodan_prompts.csv") -> list[str]:
     """
     AutoDAN CSVs store the template with literal '[REPLACE]' where the harmful
     goal should appear.  Substitute it before encoding hidden states so the
@@ -131,7 +131,7 @@ def _load_autodan_texts(fname: str = "autodan_transformed_820.csv") -> list[str]
     n_replaced = 0
     with open(path, encoding="utf-8") as f:
         for row in _csv.DictReader(f):
-            prompt = row.get("autodan_prompt", "").strip()
+            prompt = row.get("autodan_prompt", "").strip() or row.get("prompt", "").strip()
             goal   = row.get("goal", "").strip()
             if not prompt:
                 continue
@@ -153,10 +153,27 @@ def _load_drattack_texts(model_name: str = "") -> list[str]:
         fname = candidate
         print(f"  Using model-specific DrAttack file: {fname}")
     else:
-        fname = "drattack_results_mistral.csv"
+        fname = "drattack_results_mistral-7b.csv"
         if model_short and "mistral" not in model_short:
             print(f"  [WARN] No DrAttack file for '{model_short}' — falling back to mistral version")
     return _load_transformed_csv(fname, "best_adversarial_prompt")
+
+
+
+def _load_pair_texts(model_name: str = "") -> list[str]:
+    """Load PAIR results. Prefer model-specific 850-prompt file, fallback to mistral-7b_850."""
+    model_short = model_name.split("/")[-1].lower().replace("_", "-") if model_name else ""
+    for fname in [
+        f"pair_results_{model_short}_850.csv" if model_short else "",
+        "pair_results_mistral-7b_850.csv",
+        f"pair_results_{model_short}.csv" if model_short else "",
+        "pair_results_mistral-7b.csv",
+    ]:
+        if fname and os.path.exists(os.path.join(TRANSFORMED_DIR, fname)):
+            print(f"  Using PAIR file: {fname}")
+            return _load_transformed_csv(fname, "best_adversarial_prompt")
+    print("  [WARN] No PAIR file found")
+    return []
 
 
 def load_attack_texts(dataset: str, rng: random.Random, model_name: str = "") -> list[str]:
@@ -183,6 +200,9 @@ def load_attack_texts(dataset: str, rng: random.Random, model_name: str = "") ->
 
     elif dataset == "drattack":
         texts.extend(_load_drattack_texts(model_name))
+
+    elif dataset == "pair":
+        texts.extend(_load_pair_texts(model_name))
 
     if not texts:
         raise FileNotFoundError(f"No attack samples found for dataset='{dataset}'.")
@@ -264,6 +284,7 @@ def build_seed_vectors(
         "zulu":     lambda: _load_transformed_csv("zulu_prompts.csv", "prompt"),
         "base64":   lambda: _load_transformed_csv("base64_prompts.csv", "prompt"),
         "drattack": lambda: _load_drattack_texts(model_name),
+        "pair":     lambda: _load_pair_texts(model_name),
     }
 
     if seed_strategy in cross_attack_loaders:
@@ -384,7 +405,7 @@ def classify_cached(
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
-ATTACK_DATASETS = ["autodan", "zulu", "base64", "drattack"]
+ATTACK_DATASETS = ["autodan", "zulu", "base64", "drattack", "pair"]
 BENIGN_DATASETS = ["xstest", "jailbreakbench", "wildjailbreak"]
 ALL_DATASETS    = ATTACK_DATASETS + BENIGN_DATASETS
 
@@ -650,7 +671,7 @@ def main():
     )
     parser.add_argument(
         "--seeds",
-        choices=["advbench", "handcrafted", "mixed", "autodan", "drattack", "zulu", "base64"],
+        choices=["advbench", "handcrafted", "mixed", "autodan", "drattack", "zulu", "base64", "pair"],
         default="advbench",
         help=(
             "Seed strategy for the attack memory bank. "
